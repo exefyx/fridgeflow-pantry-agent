@@ -18,6 +18,7 @@
         <button class="nav-item" data-scroll="inventory"><span>02</span>我的食材</button>
         <button class="nav-item" data-scroll="mealStudio"><span>03</span>用餐建议</button>
         <button class="nav-item" data-scroll="shopping"><span>04</span>购物清单</button>
+        <button class="nav-item" data-scroll="history"><span>05</span>用餐记录</button>
       </nav>
       <div class="waste-card"><b id="savedCount">0</b><span>份食材被及时使用</span><small>从今天开始减少浪费</small></div>
       <div class="local-note"><span></span><div><b>本地模式</b><small>数据不离开浏览器</small></div></div>
@@ -43,6 +44,7 @@
       <div class="content-grid">
         <section class="panel inventory-panel" id="inventory">
           <div class="section-head"><div><p class="kicker">YOUR PANTRY</p><h2>冰箱里的食材</h2></div><div class="filters" id="inventoryFilters"><button class="active" data-filter="all">全部</button><button data-filter="soon">快过期</button><button data-filter="fresh">新鲜</button></div></div>
+          <div class="inventory-tools"><input id="inventorySearch" type="search" placeholder="搜索食材"><select id="inventorySort" aria-label="食材排序"><option value="expiry">按保质期</option><option value="name">按名称</option><option value="category">按分类</option></select></div>
           <div class="inventory-list" id="inventoryList"></div>
         </section>
 
@@ -51,12 +53,18 @@
           <div class="planner-controls"><label>最多用时<select id="timeLimit"><option value="15">15 分钟</option><option value="30" selected>30 分钟</option><option value="45">45 分钟</option><option value="60">60 分钟</option></select></label><label>用餐偏好<select id="preference"><option value="all">都可以</option><option value="vegetarian">清淡素食</option><option value="protein">高蛋白</option></select></label><label>用餐人数<select id="servings"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label></div>
           <button class="plan-button" id="planMeal">生成用餐建议 <span>→</span></button>
           <div class="meal-result" id="mealResult"><p class="empty-state">选择时间与偏好，让 Agent 从现有食材中安排一顿饭。</p></div>
+          <div class="alternatives" id="mealAlternatives"></div>
         </section>
 
         <section class="panel shopping-panel" id="shopping">
           <div class="section-head"><div><p class="kicker">SMART LIST</p><h2>购物清单</h2></div><button class="text-button" id="clearBought">清理已买</button></div>
           <form class="quick-add" id="shoppingForm"><input name="item" maxlength="50" placeholder="添加需要购买的东西" required><button>添加</button></form>
           <div id="shoppingList" class="shopping-list"></div>
+        </section>
+
+        <section class="panel history-panel" id="history">
+          <div class="section-head"><div><p class="kicker">MEAL MEMORY</p><h2>最近做过的饭</h2></div><div><button class="text-button" id="clearHistory">清空记录</button><button class="text-button" id="resetDemo">恢复示例</button></div></div>
+          <div class="history-list" id="historyList"></div>
         </section>
       </div>
     </main>
@@ -71,6 +79,15 @@
       <div class="form-grid"><label>保质期至<input name="expiry" type="date" required></label><label>存放位置<select name="location"><option>冷藏室</option><option>冷冻室</option><option>常温储物</option></select></label></div>
       <div class="dialog-actions"><button type="button" class="ghost" id="cancelDialog">取消</button><button class="primary" id="saveIngredient">保存食材</button></div>
     </form>
+  </dialog>
+  <dialog id="cookDialog" class="cook-dialog">
+    <div class="cook-shell">
+      <div class="dialog-head"><div><p class="kicker">COOKING MODE</p><h2 id="cookTitle">开始烹饪</h2></div><button type="button" class="close-button" id="closeCook" aria-label="关闭">×</button></div>
+      <div class="cook-meta"><span id="cookTime"></span><span id="cookServings"></span><span id="cookReady"></span></div>
+      <div class="timer"><b id="timerDisplay">00:00</b><div><button id="timerToggle">开始计时</button><button class="ghost" id="timerReset">重置</button></div></div>
+      <ol class="cook-steps" id="cookSteps"></ol>
+      <button class="primary finish-cook" id="finishCook">完成这道菜并更新库存</button>
+    </div>
   </dialog>
   <div class="toast" id="toast" role="status"></div>
   <script src="app.js"></script>
