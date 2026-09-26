@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="根据冰箱现有食材、保质期和时间生成用餐建议的本地智能食材管家。">
+  <meta name="theme-color" content="#143a32">
+  <title>FridgeFlow · 冰箱食材管家</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='3' width='20' height='26' rx='6' fill='%23143a32'/%3E%3Cpath d='M6 14h20M21 8v3M21 18v5' stroke='%23e7f3d8' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='11' cy='9' r='2' fill='%23ef765d'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">F</span><div><strong>FridgeFlow</strong><small>冰箱食材管家</small></div></div>
+      <nav aria-label="功能导航">
+        <button class="nav-item active" data-scroll="dashboard"><span>01</span>今日概览</button>
+        <button class="nav-item" data-scroll="inventory"><span>02</span>我的食材</button>
+        <button class="nav-item" data-scroll="mealStudio"><span>03</span>用餐建议</button>
+        <button class="nav-item" data-scroll="shopping"><span>04</span>购物清单</button>
+      </nav>
+      <div class="waste-card"><b id="savedCount">0</b><span>份食材被及时使用</span><small>从今天开始减少浪费</small></div>
+      <div class="local-note"><span></span><div><b>本地模式</b><small>数据不离开浏览器</small></div></div>
+    </aside>
+
+    <main>
+      <header class="topbar"><div><p id="todayLabel"></p><h1>晚上好，今天吃点什么？</h1></div><div class="top-actions"><button class="ghost" id="exportData">导出</button><button class="ghost" id="importData">导入</button><input id="importFile" type="file" accept="application/json" hidden><button class="primary" id="openIngredient">＋ 添加食材</button></div></header>
+
+      <section class="hero" id="dashboard">
+        <img src="assets/pantry-table.jpg" alt="整齐摆放的新鲜蔬菜、鸡蛋与谷物">
+        <div class="hero-shade"></div>
+        <div class="hero-copy"><p>FRIDGE INSIGHT</p><h2 id="heroTitle">先用掉快过期的食材</h2><span id="heroCopy">让冰箱里的每一样东西都有去处。</span></div>
+        <button class="hero-action" id="quickPlan"><span>为今晚规划</span><b>→</b></button>
+      </section>
+
+      <section class="metrics" aria-label="食材概览">
+        <article><span>现有食材</span><b id="totalItems">0</b><small>种</small></article>
+        <article><span>即将到期</span><b id="expiringItems">0</b><small>三天内</small></article>
+        <article><span>可做菜品</span><b id="possibleMeals">0</b><small>无需采购</small></article>
+        <article><span>购物清单</span><b id="shoppingCount">0</b><small>项待购买</small></article>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel inventory-panel" id="inventory">
+          <div class="section-head"><div><p class="kicker">YOUR PANTRY</p><h2>冰箱里的食材</h2></div><div class="filters" id="inventoryFilters"><button class="active" data-filter="all">全部</button><button data-filter="soon">快过期</button><button data-filter="fresh">新鲜</button></div></div>
+          <div class="inventory-list" id="inventoryList"></div>
+        </section>
+
+        <section class="panel planner-panel" id="mealStudio">
+          <div class="section-head"><div><p class="kicker">MEAL STUDIO</p><h2>今天怎么吃</h2></div><span class="agent-chip">本地 Agent</span></div>
+          <div class="planner-controls"><label>最多用时<select id="timeLimit"><option value="15">15 分钟</option><option value="30" selected>30 分钟</option><option value="45">45 分钟</option><option value="60">60 分钟</option></select></label><label>用餐偏好<select id="preference"><option value="all">都可以</option><option value="vegetarian">清淡素食</option><option value="protein">高蛋白</option></select></label><label>用餐人数<select id="servings"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label></div>
+          <button class="plan-button" id="planMeal">生成用餐建议 <span>→</span></button>
+          <div class="meal-result" id="mealResult"><p class="empty-state">选择时间与偏好，让 Agent 从现有食材中安排一顿饭。</p></div>
+        </section>
+
+        <section class="panel shopping-panel" id="shopping">
+          <div class="section-head"><div><p class="kicker">SMART LIST</p><h2>购物清单</h2></div><button class="text-button" id="clearBought">清理已买</button></div>
+          <form class="quick-add" id="shoppingForm"><input name="item" maxlength="50" placeholder="添加需要购买的东西" required><button>添加</button></form>
+          <div id="shoppingList" class="shopping-list"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="ingredientDialog">
+    <form id="ingredientForm">
+      <div class="dialog-head"><div><p class="kicker" id="dialogKicker">NEW INGREDIENT</p><h2 id="dialogTitle">添加食材</h2></div><button type="button" class="close-button" id="closeDialog" aria-label="关闭">×</button></div>
+      <input type="hidden" name="id">
+      <div class="form-grid"><label>食材名称<input name="name" required maxlength="50" placeholder="例如：番茄"></label><label>分类<select name="category"><option>蔬菜</option><option>水果</option><option>肉蛋</option><option>乳制品</option><option>主食</option><option>调味料</option><option>其他</option></select></label></div>
+      <div class="form-grid"><label>数量<input name="quantity" type="number" min="0.1" max="999" step="0.1" value="1" required></label><label>单位<select name="unit"><option>份</option><option>个</option><option>盒</option><option>袋</option><option>克</option><option>毫升</option></select></label></div>
+      <div class="form-grid"><label>保质期至<input name="expiry" type="date" required></label><label>存放位置<select name="location"><option>冷藏室</option><option>冷冻室</option><option>常温储物</option></select></label></div>
+      <div class="dialog-actions"><button type="button" class="ghost" id="cancelDialog">取消</button><button class="primary" id="saveIngredient">保存食材</button></div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
